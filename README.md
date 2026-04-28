@@ -114,60 +114,6 @@ task validate        Run terraform validate across all modules
 task destroy         Destroy all resources
 ```
 
-## Architecture
-
-```
-GCP Project
-└── VPC (private)
-    └── GKE Cluster (hcp-terraform-agents)
-        ├── system node pool    — operator workloads (tainted, no agent pods)
-        └── agents node pool    — tfc-agent pods (Workload Identity enabled)
-            ├── tfc-agents namespace
-            │   ├── AgentPool: gke-agent-pool-non-prod  (autoscale 0–5)
-            │   └── AgentPool: gke-agent-pool-prod      (autoscale 0–5)
-            └── tfc-operator-system namespace
-                └── HCP Terraform Operator (Helm)
-
-HCP Terraform
-└── Organisation
-    ├── Agent Pool: gke-agent-pool-non-prod
-    ├── Agent Pool: gke-agent-pool-prod
-    └── Project: gke-agents-demo
-        └── Workspace: sample-gcs-bucket  (agent execution, non-prod pool)
-```
-
-**Workload Identity** — agent pods assume a GCP service account (`hcp-terraform-agents-tfc-agent`) via Kubernetes ServiceAccount annotation. No JSON key files or `GOOGLE_CREDENTIALS` env vars required in workspaces.
-
-**Autoscaling** — agent pods scale from 0 to 5 replicas. Pods spin up when a workspace queues a run and scale back down after 5 minutes idle.
-
-## Project Structure
-
-```
-.
-├── .env.example
-├── Taskfile.yaml
-├── helm-chart/
-│   └── hcp-terraform-operator/
-│       └── values/
-│           └── operator-values.yaml
-├── scripts/
-│   ├── lib/
-│   │   ├── colors.sh
-│   │   └── gke_context.sh
-│   ├── 10_deploy_gke.sh
-│   ├── 20_deploy_operator.sh
-│   ├── 30_deploy_agent_pools.sh
-│   ├── 40_verify.sh
-│   ├── 50_deploy_sample.sh
-│   └── 99_destroy.sh
-└── terraform/
-    ├── gke-cluster/                   # VPC, GKE cluster, node pools, Cloud NAT, Workload Identity SA
-    ├── hcp-terraform-operator/        # Operator namespace, token secret, Helm release
-    ├── agent-pools/                   # AgentPool CRDs, Kubernetes SA (Workload Identity)
-    ├── workspace-bootstrap/           # HCP Terraform project, workspace, and workspace variables
-    └── workspace-sample-gcs-bucket/   # Sample Terraform — deploys a GCS bucket via the GKE agent
-```
-
 ## Troubleshooting
 
 ### No agents visible in HCP Terraform UI
