@@ -109,8 +109,6 @@ task deploy:sample   Bootstrap the HCP Terraform project and workspace for the G
 task deploy:all      Deploy everything in order (GKE → Operator → Agents → Sample)
 task run:sample      Trigger a CLI-driven run of the sample GCS bucket workspace on HCP Terraform
 task verify          Verify the deployment health
-task fmt             Run terraform fmt across all modules
-task validate        Run terraform validate across all modules
 task destroy         Destroy all resources
 ```
 
