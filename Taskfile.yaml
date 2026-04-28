@@ -1,0 +1,96 @@
+version: "3"
+
+dotenv:
+  - .env
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - task --list
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  login:
+    desc: Authenticate with GCP and set application default credentials
+    cmds:
+      - gcloud auth login
+      - gcloud config set project {{.GCP_PROJECT_ID}}
+      - gcloud auth application-default login
+
+  # ── Deployment ────────────────────────────────────────────────────────────
+
+  deploy:gke:
+    desc: Deploy the GKE cluster
+    cmds:
+      - bash scripts/10_deploy_gke.sh
+
+  deploy:operator:
+    desc: Deploy the HCP Terraform Operator onto the GKE cluster
+    deps: [deploy:gke]
+    cmds:
+      - bash scripts/20_deploy_operator.sh
+
+  deploy:agents:
+    desc: Deploy HCP Terraform Agent Pools
+    deps: [deploy:operator]
+    cmds:
+      - bash scripts/30_deploy_agent_pools.sh
+
+  deploy:sample:
+    desc: Bootstrap the HCP Terraform project and workspace for the GCS bucket demo
+    deps: [deploy:agents]
+    cmds:
+      - bash scripts/50_deploy_sample.sh
+
+  deploy:all:
+    desc: Deploy everything in order (GKE → Operator → Agents → Sample)
+    cmds:
+      - task: deploy:gke
+      - task: deploy:operator
+      - task: deploy:agents
+      - task: deploy:sample
+
+  run:sample:
+    desc: Trigger a CLI-driven run of the sample GCS bucket workspace on HCP Terraform
+    env:
+      TF_CLOUD_ORGANIZATION: "{{.HCP_TERRAFORM_ORGANIZATION}}"
+      TF_WORKSPACE: "sample-gcs-bucket"
+      TF_TOKEN_app_terraform_io: "{{.HCP_TERRAFORM_TOKEN}}"
+    cmds:
+      - terraform -chdir=terraform/workspace-sample-gcs-bucket init -upgrade
+      - terraform -chdir=terraform/workspace-sample-gcs-bucket apply
+
+  # ── Terraform helpers ─────────────────────────────────────────────────────
+
+  fmt:
+    desc: Run terraform fmt across all modules
+    cmds:
+      - terraform -chdir=terraform/gke-cluster fmt
+      - terraform -chdir=terraform/hcp-terraform-operator fmt
+      - terraform -chdir=terraform/agent-pools fmt
+      - terraform -chdir=terraform/workspace-bootstrap fmt
+      - terraform -chdir=terraform/workspace-sample-gcs-bucket fmt
+
+  validate:
+    desc: Run terraform validate across all modules
+    cmds:
+      - terraform -chdir=terraform/gke-cluster validate
+      - terraform -chdir=terraform/hcp-terraform-operator validate
+      - terraform -chdir=terraform/agent-pools validate
+      - terraform -chdir=terraform/workspace-bootstrap validate
+
+  # ── Verification ──────────────────────────────────────────────────────────
+
+  verify:
+    desc: Verify the deployment health
+    cmds:
+      - bash scripts/40_verify.sh
+
+  # ── Teardown ──────────────────────────────────────────────────────────────
+
+  destroy:
+    desc: Destroy all resources
+    aliases: [clean]
+    cmds:
+      - bash scripts/99_destroy.sh

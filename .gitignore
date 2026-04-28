@@ -1,0 +1,26 @@
+# Claude Code
+.claude/
+
+# Environment / secrets
+.env
+.env.local
+*.lic
+*.pem
+*.key
+*.tfvars
+*.tfvars.json
+
+# Terraform state & artefacts
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/tfplan
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# OS
+.DS_Store
+Thumbs.db

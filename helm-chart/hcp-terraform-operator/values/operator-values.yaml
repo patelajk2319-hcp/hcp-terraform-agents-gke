@@ -1,0 +1,26 @@
+operator:
+  # Sync period controls how often the operator reconciles resources.
+  syncPeriod: 5m
+
+  # Watch only specific namespaces; leave empty to watch all namespaces.
+  watchedNamespaces: []
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Pin the operator to system nodes so agent nodes remain available for workloads.
+nodeSelector:
+  node-pool: system
+
+tolerations:
+  - key: node-role
+    operator: Equal
+    value: system
+    effect: NoSchedule
