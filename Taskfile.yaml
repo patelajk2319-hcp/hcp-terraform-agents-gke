@@ -61,25 +61,6 @@ tasks:
       - terraform -chdir=terraform/workspace-sample-gcs-bucket init -upgrade
       - terraform -chdir=terraform/workspace-sample-gcs-bucket apply
 
-  # ── Terraform helpers ─────────────────────────────────────────────────────
-
-  fmt:
-    desc: Run terraform fmt across all modules
-    cmds:
-      - terraform -chdir=terraform/gke-cluster fmt
-      - terraform -chdir=terraform/hcp-terraform-operator fmt
-      - terraform -chdir=terraform/agent-pools fmt
-      - terraform -chdir=terraform/workspace-bootstrap fmt
-      - terraform -chdir=terraform/workspace-sample-gcs-bucket fmt
-
-  validate:
-    desc: Run terraform validate across all modules
-    cmds:
-      - terraform -chdir=terraform/gke-cluster validate
-      - terraform -chdir=terraform/hcp-terraform-operator validate
-      - terraform -chdir=terraform/agent-pools validate
-      - terraform -chdir=terraform/workspace-bootstrap validate
-
   # ── Verification ──────────────────────────────────────────────────────────
 
   verify:
