@@ -2,8 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/colors.sh
-source "${SCRIPT_DIR}/lib/colors.sh"
+# shellcheck source=lib/colours.sh
+source "${SCRIPT_DIR}/lib/colours.sh"
 
 ENV_FILE="${SCRIPT_DIR}/../.env"
 if [[ ! -f "${ENV_FILE}" ]]; then

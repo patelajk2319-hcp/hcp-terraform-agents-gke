@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Terminal color codes and print helpers.
+# Terminal colour codes and print helpers.
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

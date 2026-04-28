@@ -14,6 +14,7 @@ resource "tfe_workspace" "demo" {
   project_id        = tfe_project.demo.id
   terraform_version = "~> 1.5"
   auto_apply        = false
+  force_delete      = true
   tag_names         = ["demo", "gke-agents", "gcs"]
 }
 
