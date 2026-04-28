@@ -29,6 +29,7 @@ terraform destroy \
   -auto-approve || warn "Workspace bootstrap destroy failed (may already be removed)."
 
 step "Destroying agent pools"
+kubectl delete agentpool --all -n tfc-agents --timeout=60s 2>/dev/null || true
 cd "${SCRIPT_DIR}/../terraform/agent-pools"
 terraform destroy \
   -var="gcp_project_id=${GCP_PROJECT_ID}" \

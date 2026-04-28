@@ -59,7 +59,7 @@ tasks:
       TF_TOKEN_app_terraform_io: "{{.HCP_TERRAFORM_TOKEN}}"
     cmds:
       - terraform -chdir=terraform/workspace-sample-gcs-bucket init -upgrade
-      - terraform -chdir=terraform/workspace-sample-gcs-bucket apply
+      - terraform -chdir=terraform/workspace-sample-gcs-bucket apply -auto-approve
 
   # ── Verification ──────────────────────────────────────────────────────────
 
