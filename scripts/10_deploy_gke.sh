@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/colours.sh"
 # shellcheck source=lib/gke_context.sh
 source "${SCRIPT_DIR}/lib/gke_context.sh"
+# shellcheck source=lib/auth_check.sh
+source "${SCRIPT_DIR}/lib/auth_check.sh"
 
 ENV_FILE="${SCRIPT_DIR}/../.env"
 if [[ ! -f "${ENV_FILE}" ]]; then
@@ -14,6 +16,8 @@ if [[ ! -f "${ENV_FILE}" ]]; then
 fi
 # shellcheck disable=SC1090
 source "${ENV_FILE}"
+
+assert_gcp_auth
 
 cd "${SCRIPT_DIR}/../terraform/gke-cluster"
 
