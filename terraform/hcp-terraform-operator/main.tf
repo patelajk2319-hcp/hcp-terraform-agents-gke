@@ -2,7 +2,7 @@
 
 resource "kubernetes_namespace" "operator" {
   metadata {
-    name = "tfc-operator-system"
+    name = "tfc-operator-system" # Follows Kubernetes Naming Convention - This can be called anything but name should be clear 
 
     labels = {
       "app.kubernetes.io/managed-by" = "terraform"
@@ -12,7 +12,7 @@ resource "kubernetes_namespace" "operator" {
 }
 
 # ── API token secret — operator reads "terraformrc" at startup to authenticate ─
-
+# ── The HCP Terraform Operator expects a Secret called "terraformrc" - So the secret MUST be called this
 resource "kubernetes_secret" "operator_token" {
   metadata {
     name      = "terraformrc"
@@ -45,6 +45,6 @@ resource "helm_release" "hcp_terraform_operator" {
 
   depends_on = [
     kubernetes_namespace.operator,
-    kubernetes_secret.operator_token,
+    kubernetes_secret.operator_token, # Secret must exist before we deploy the operator, else the operator will fail to install.
   ]
 }
