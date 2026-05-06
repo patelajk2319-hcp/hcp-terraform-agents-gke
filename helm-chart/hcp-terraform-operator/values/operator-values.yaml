@@ -1,9 +1,10 @@
 operator:
   # Sync period controls how often the operator reconciles resources.
-  syncPeriod: 5m
+  syncPeriod: 1m
 
-  # Watch only specific namespaces; leave empty to watch all namespaces.
-  watchedNamespaces: []
+  # Restrict to namespaces where CRs are deployed; avoids cluster-wide RBAC.
+  watchedNamespaces:
+    - tfc-agents
 
 replicaCount: 1
 
