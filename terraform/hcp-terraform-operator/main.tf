@@ -1,4 +1,4 @@
-# ── Operator namespace ────────────────────────────────────────────────────────
+# ── Namespace ─────────────────────────────────────────────────────────────────
 
 resource "kubernetes_namespace" "operator" {
   metadata {
@@ -11,7 +11,7 @@ resource "kubernetes_namespace" "operator" {
   }
 }
 
-# ── Operator API token secret ─────────────────────────────────────────────────
+# ── API token secret — operator reads "terraformrc" at startup to authenticate ─
 
 resource "kubernetes_secret" "operator_token" {
   metadata {
@@ -26,7 +26,7 @@ resource "kubernetes_secret" "operator_token" {
   type = "Opaque"
 }
 
-# ── HCP Terraform Operator Helm release ──────────────────────────────────────
+# ── Helm release — depends_on secret ensures it exists before operator starts ─
 
 resource "helm_release" "hcp_terraform_operator" {
   name       = "hcp-terraform-operator"

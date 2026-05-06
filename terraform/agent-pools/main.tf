@@ -39,7 +39,8 @@ resource "kubernetes_secret" "agent_token" {
   type = "Opaque"
 }
 
-# ── AgentPool custom resources ────────────────────────────────────────────────
+# ── AgentPool custom resources ---
+# ── When using the AgentPool CRD, Kubernetes manages the Agent Pools in HCP Terraform, including creating them ---
 
 resource "kubernetes_manifest" "agent_pool" {
   for_each = local.agent_pools
