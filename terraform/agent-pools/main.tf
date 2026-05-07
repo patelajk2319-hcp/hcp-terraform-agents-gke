@@ -61,11 +61,7 @@ resource "kubernetes_manifest" "agent_pool" {
         }
       }
       name = each.value.pool_name
-      agentTokens = [
-        {
-          name = each.value.token_name
-        }
-      ]
+      agentTokens = [for t in each.value.token_names : { name = t }]
       agentDeployment = {
         replicas = null
         spec = {
