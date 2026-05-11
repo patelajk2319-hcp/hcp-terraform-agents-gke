@@ -1,5 +1,7 @@
 # HCP Terraform Agents on GKE
 
+> **Disclaimer:** This repository is a demo environment only. It is not designed, tested, or hardened for production use. Do not use it to manage real workloads or sensitive infrastructure.
+
 Deploy the HCP Terraform Operator v2 on a private GKE cluster. The operator manages `AgentPool` custom resources that run `tfc-agent` pods, enabling HCP Terraform to execute Terraform runs inside your GKE cluster using Workload Identity — no static credentials required.
 
 ## Prerequisites
