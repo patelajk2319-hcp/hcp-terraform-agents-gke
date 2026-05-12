@@ -1,6 +1,5 @@
 locals {
-  cluster_name                    = "hcp-terraform-agents"
-  tfc_agent_service_account_email = "${local.cluster_name}-tfc-agent@${var.gcp_project_id}.iam.gserviceaccount.com"
+  cluster_name = var.cluster_name
 
   agent_pools = {
     non-prod = {

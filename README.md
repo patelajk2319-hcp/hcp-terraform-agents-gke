@@ -49,6 +49,7 @@ GKE_REGION=europe-west2
 # HCP Terraform
 HCP_TERRAFORM_TOKEN=your-team-api-token
 HCP_TERRAFORM_ORGANIZATION=your-org-name
+HCP_TERRAFORM_ORGANIZATION_ID=your-org-id
 ```
 
 ### 3. Authenticate

@@ -11,19 +11,6 @@ resource "kubernetes_namespace" "agents" {
   }
 }
 
-# ── Workload Identity Kubernetes Service Account ──────────────────────────────
-
-resource "kubernetes_service_account" "tfc_agent" {
-  metadata {
-    name      = "tfc-agent"
-    namespace = kubernetes_namespace.agents.metadata[0].name
-
-    annotations = {
-      "iam.gke.io/gcp-service-account" = local.tfc_agent_service_account_email
-    }
-  }
-}
-
 # ── Agent pool API token secret ───────────────────────────────────────────────
 
 resource "kubernetes_secret" "agent_token" {
@@ -60,12 +47,11 @@ resource "kubernetes_manifest" "agent_pool" {
           key  = "token"
         }
       }
-      name = each.value.pool_name
+      name        = each.value.pool_name
       agentTokens = [for t in each.value.token_names : { name = t }]
       agentDeployment = {
         replicas = null
         spec = {
-          serviceAccountName = kubernetes_service_account.tfc_agent.metadata[0].name
           containers = [
             {
               name  = "tfc-agent"
@@ -105,6 +91,5 @@ resource "kubernetes_manifest" "agent_pool" {
   depends_on = [
     kubernetes_namespace.agents,
     kubernetes_secret.agent_token,
-    kubernetes_service_account.tfc_agent,
   ]
 }

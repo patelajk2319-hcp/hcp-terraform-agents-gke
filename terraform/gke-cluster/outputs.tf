@@ -1,5 +1,5 @@
 output "cluster_name" {
-  description = "GKE cluster name."
+  description = "GKE cluster name (includes random suffix)."
   value       = google_container_cluster.primary.name
 }
 
@@ -30,7 +30,17 @@ output "vpc_name" {
   value       = google_compute_network.vpc.name
 }
 
-output "tfc_agent_service_account_email" {
-  description = "Email of the GCP service account used by TFC agents via Workload Identity."
-  value       = google_service_account.tfc_agent.email
+output "workload_identity_audience" {
+  description = "Audience value to set as TFC_WORKLOAD_IDENTITY_AUDIENCE in HCP Terraform workspaces."
+  value       = "//iam.googleapis.com/${google_iam_workload_identity_pool.hcp_terraform.name}"
+}
+
+output "workload_identity_provider_name" {
+  description = "Full resource name of the Workload Identity pool provider."
+  value       = google_iam_workload_identity_pool_provider.hcp_terraform.name
+}
+
+output "hcp_terraform_agent_sa_email" {
+  description = "Email of the SA that HCP Terraform agent runs impersonate via WIF."
+  value       = google_service_account.hcp_terraform_agent.email
 }

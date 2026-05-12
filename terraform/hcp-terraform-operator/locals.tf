@@ -1,3 +1,3 @@
 locals {
-  cluster_name = "hcp-terraform-agents"
+  cluster_name = var.cluster_name
 }

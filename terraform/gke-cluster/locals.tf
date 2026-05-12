@@ -1,3 +1,3 @@
 locals {
-  cluster_name = "hcp-terraform-agents"
+  cluster_name = "hcp-tf-agents-${random_id.suffix.hex}"
 }

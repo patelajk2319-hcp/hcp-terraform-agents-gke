@@ -2,21 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/colours.sh
 source "${SCRIPT_DIR}/lib/colours.sh"
-# shellcheck source=lib/gke_context.sh
+source "${SCRIPT_DIR}/lib/env_check.sh"
 source "${SCRIPT_DIR}/lib/gke_context.sh"
-# shellcheck source=lib/auth_check.sh
 source "${SCRIPT_DIR}/lib/auth_check.sh"
 
-ENV_FILE="${SCRIPT_DIR}/../.env"
-if [[ ! -f "${ENV_FILE}" ]]; then
-  error ".env file not found at ${ENV_FILE}. Copy .env.example and populate it."
-  exit 1
-fi
-# shellcheck disable=SC1090
-source "${ENV_FILE}"
-
+load_env "${SCRIPT_DIR}/../.env"
 assert_gcp_auth
 
 cd "${SCRIPT_DIR}/../terraform/gke-cluster"
@@ -26,6 +17,7 @@ terraform init -upgrade
 terraform apply \
   -var="gcp_project_id=${GCP_PROJECT_ID}" \
   -var="gcp_region=${GKE_REGION}" \
+  -var="hcp_terraform_organization_id=${HCP_TERRAFORM_ORGANIZATION_ID}" \
   -auto-approve
 
 get_gke_credentials "${GKE_CLUSTER_NAME}" "${GKE_REGION}" "${GCP_PROJECT_ID}"
@@ -33,5 +25,26 @@ get_gke_credentials "${GKE_CLUSTER_NAME}" "${GKE_REGION}" "${GCP_PROJECT_ID}"
 step "Waiting for nodes to be ready"
 until kubectl get nodes --no-headers 2>/dev/null | grep -q .; do sleep 5; done
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
+
+step "Writing cluster outputs to .env"
+WI_AUDIENCE="$(terraform output -raw workload_identity_audience)"
+CLUSTER_NAME="$(terraform output -raw cluster_name)"
+ENV_FILE="${SCRIPT_DIR}/../.env"
+
+_upsert_env() {
+  local key="${1}" value="${2}" file="${3}"
+  local tmp
+  tmp="$(mktemp)"
+  if grep -q "^${key}=" "${file}"; then
+    sed "s|^${key}=.*|${key}=${value}|" "${file}" > "${tmp}"
+  else
+    cp "${file}" "${tmp}"
+    printf '\n%s=%s\n' "${key}" "${value}" >> "${tmp}"
+  fi
+  mv "${tmp}" "${file}"
+}
+
+_upsert_env "WORKLOAD_IDENTITY_AUDIENCE" "${WI_AUDIENCE}" "${ENV_FILE}"
+_upsert_env "GKE_CLUSTER_NAME" "${CLUSTER_NAME}" "${ENV_FILE}"
 
 success "GKE cluster is ready."

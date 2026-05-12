@@ -39,3 +39,44 @@ resource "tfe_variable" "gcp_region" {
   category     = "terraform"
   workspace_id = tfe_workspace.demo.id
 }
+
+# ── HCP Terraform Workload Identity env vars ──────────────────────────────────
+
+resource "tfe_variable" "tfc_workload_identity_audience" {
+  key          = "TFC_WORKLOAD_IDENTITY_AUDIENCE"
+  value        = var.workload_identity_audience
+  category     = "env"
+  workspace_id = tfe_workspace.demo.id
+}
+
+resource "tfe_variable" "google_project" {
+  key          = "GOOGLE_PROJECT"
+  value        = var.gcp_project_id
+  category     = "env"
+  workspace_id = tfe_workspace.demo.id
+}
+
+# ── HCP Terraform native GCP dynamic credentials ──────────────────────────────
+# These three vars tell HCP Terraform to automatically exchange the run's OIDC
+# token for a short-lived GCP access token via the WIF provider.
+
+resource "tfe_variable" "tfc_gcp_provider_auth" {
+  key          = "TFC_GCP_PROVIDER_AUTH"
+  value        = "true"
+  category     = "env"
+  workspace_id = tfe_workspace.demo.id
+}
+
+resource "tfe_variable" "tfc_gcp_workload_provider_name" {
+  key          = "TFC_GCP_WORKLOAD_PROVIDER_NAME"
+  value        = var.workload_identity_provider_name
+  category     = "env"
+  workspace_id = tfe_workspace.demo.id
+}
+
+resource "tfe_variable" "tfc_gcp_run_service_account_email" {
+  key          = "TFC_GCP_RUN_SERVICE_ACCOUNT_EMAIL"
+  value        = var.agent_sa_email
+  category     = "env"
+  workspace_id = tfe_workspace.demo.id
+}

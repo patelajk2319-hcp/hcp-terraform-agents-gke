@@ -1,3 +1,3 @@
 provider "tfe" {
-  token = var.hcp_terraform_token
+  # Token is supplied via TFE_TOKEN environment variable in scripts.
 }

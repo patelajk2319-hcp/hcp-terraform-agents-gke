@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-GKE_CLUSTER_NAME="hcp-terraform-agents"
+# GKE_CLUSTER_NAME is set dynamically in .env by 10_deploy_gke.sh.
 
 get_gke_credentials() {
   local cluster="${1}"
