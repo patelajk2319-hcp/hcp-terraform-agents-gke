@@ -37,29 +37,12 @@ tasks:
     cmds:
       - bash scripts/30_deploy_agent_pools.sh
 
-  deploy:sample:
-    desc: Bootstrap the HCP Terraform project and workspace for the GCS bucket demo
-    deps: [deploy:agents]
-    cmds:
-      - bash scripts/50_deploy_sample.sh
-
   deploy:all:
-    desc: Deploy everything in order (GKE → Operator → Agents → Sample)
+    desc: Deploy everything in order (GKE → Operator → Agents)
     cmds:
       - task: deploy:gke
       - task: deploy:operator
       - task: deploy:agents
-      - task: deploy:sample
-
-  run:sample:
-    desc: Trigger a CLI-driven run of the sample GCS bucket workspace on HCP Terraform
-    env:
-      TF_CLOUD_ORGANIZATION: "{{.HCP_TERRAFORM_ORGANIZATION}}"
-      TF_WORKSPACE: "sample-gcs-bucket"
-      TF_TOKEN_app_terraform_io: "{{.HCP_TERRAFORM_TOKEN}}"
-    cmds:
-      - terraform -chdir=terraform/workspace-sample-gcs-bucket init -upgrade
-      - terraform -chdir=terraform/workspace-sample-gcs-bucket apply -auto-approve
 
   # ── Verification ──────────────────────────────────────────────────────────
 

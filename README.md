@@ -2,7 +2,18 @@
 
 > **Disclaimer:** This repository is a demo environment only. It is not designed, tested, or hardened for production use. Do not use it to manage real workloads or sensitive infrastructure.
 
-Deploy the HCP Terraform Operator v2 on a private GKE cluster. The operator manages `AgentPool` custom resources that run `tfc-agent` pods, enabling HCP Terraform to execute Terraform runs inside your GKE cluster using Workload Identity — no static credentials required.
+Deploy the HCP Terraform Operator v2 on a private GKE cluster. The operator manages `AgentPool` custom resources that run `tfc-agent` pods, enabling HCP Terraform to execute Terraform runs inside your GKE cluster.
+
+## Scope
+
+This repo is responsible for **GKE infrastructure and agent runtime only**:
+
+| What lives here | What lives in [tf-hcp-wif](https://github.com/patelajk2319-hcp/tf-hcp-wif) |
+|---|---|
+| VPC, private GKE cluster, node pools, Cloud NAT | WIF pools and OIDC providers |
+| GKE node service account (logs/metrics/images) | Per-app GCP service accounts (prod + nonprod) |
+| HCP Terraform Operator (Helm) | WIF impersonation bindings and IAM |
+| AgentPool CRDs (registers pools in HCP Terraform) | HCP Terraform projects, workspaces, variable sets |
 
 ## Prerequisites
 
@@ -49,7 +60,6 @@ GKE_REGION=europe-west2
 # HCP Terraform
 HCP_TERRAFORM_TOKEN=your-team-api-token
 HCP_TERRAFORM_ORGANIZATION=your-org-name
-HCP_TERRAFORM_ORGANIZATION_ID=your-org-id
 ```
 
 ### 3. Authenticate
@@ -72,20 +82,13 @@ Or step-by-step:
 task deploy:gke        # VPC, private GKE cluster, node pools, Cloud NAT
 task deploy:operator   # HCP Terraform Operator via Helm
 task deploy:agents     # non-prod and prod AgentPool custom resources
-task deploy:sample     # HCP Terraform project + workspace for the GCS demo
 ```
 
-### 5. Run the Sample Workload
+### 5. Wire up WIF and workspaces
 
-```bash
-task run:sample
-```
-
-This triggers a CLI-driven Terraform run in HCP Terraform. The run is executed by a `tfc-agent` pod on GKE using Workload Identity to deploy a GCS bucket into your GCP project. Watch the agent pod appear in the cluster:
-
-```bash
-kubectl get pods -n tfc-agents -w
-```
+Once the agent pools are registered in HCP Terraform, use [tf-hcp-wif](https://github.com/patelajk2319-hcp/tf-hcp-wif) to:
+- Create the shared WIF pools (once per environment tier)
+- Onboard each application (service accounts, workspaces, variable sets, IAM)
 
 ### 6. Verify
 
@@ -99,7 +102,9 @@ task verify
 task destroy
 ```
 
-Destroys all resources in reverse order: workspace bootstrap → agent pools → operator → GKE cluster.
+Destroys all resources in reverse order: agent pools → operator → GKE cluster.
+
+> WIF pools, service accounts, and HCP Terraform workspaces are managed by [tf-hcp-wif](https://github.com/patelajk2319-hcp/tf-hcp-wif) and must be destroyed there.
 
 ## Available Commands
 
@@ -108,9 +113,7 @@ task login           Authenticate with GCP and set application default credentia
 task deploy:gke      Deploy the GKE cluster
 task deploy:operator Deploy the HCP Terraform Operator onto the GKE cluster
 task deploy:agents   Deploy HCP Terraform Agent Pools
-task deploy:sample   Bootstrap the HCP Terraform project and workspace for the GCS bucket demo
-task deploy:all      Deploy everything in order (GKE → Operator → Agents → Sample)
-task run:sample      Trigger a CLI-driven run of the sample GCS bucket workspace on HCP Terraform
+task deploy:all      Deploy everything in order (GKE → Operator → Agents)
 task verify          Verify the deployment health
 task destroy         Destroy all resources
 ```
@@ -123,13 +126,7 @@ Expected — `minReplicas=0` means no pods run until a workspace queues a run. O
 
 ### Agent pod fails to authenticate to GCP
 
-Verify the Workload Identity binding is in place:
-
-```bash
-kubectl describe serviceaccount tfc-agent -n tfc-agents
-```
-
-The annotation `iam.gke.io/gcp-service-account` should reference the agent GSA. If missing, re-run `task deploy:agents`.
+The WIF pool, OIDC provider, and service account impersonation bindings are managed in [tf-hcp-wif](https://github.com/patelajk2319-hcp/tf-hcp-wif). Verify those resources exist and the workspace variable set contains the correct `TFC_GCP_WORKLOAD_PROVIDER_NAME` and `TFC_GCP_RUN_SERVICE_ACCOUNT_EMAIL` values.
 
 ### kubectl context points to the wrong cluster
 

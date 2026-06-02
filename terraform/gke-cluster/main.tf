@@ -29,7 +29,7 @@ resource "google_compute_subnetwork" "subnet" {
 }
 
 # ── Node Service Account ──────────────────────────────────────────────────────
-# Dedicated least-privilege SA for GKE nodes so you dint need default Compute SA
+# Dedicated least-privilege SA for GKE nodes so you don't need the default Compute SA
 # which has broad editor permissions. The 3 bindings below are the
 # minimum required for node operation: ship logs, push metrics, pull images.
 
@@ -56,56 +56,6 @@ resource "google_project_iam_member" "gke_nodes_artifact_reader" {
   member  = "serviceAccount:${google_service_account.gke_nodes.email}"
 }
 
-# ── HCP Terraform Workload Identity ──────────────────────────────────────────
-
-resource "google_iam_workload_identity_pool" "hcp_terraform" {
-  workload_identity_pool_id = "${local.cluster_name}-hcp-tf"
-  display_name              = "HCP Terraform agents"
-}
-
-resource "google_iam_workload_identity_pool_provider" "hcp_terraform" {
-  workload_identity_pool_id          = google_iam_workload_identity_pool.hcp_terraform.workload_identity_pool_id
-  workload_identity_pool_provider_id = "hcp-terraform"
-  display_name                       = "HCP Terraform OIDC"
-
-  oidc {
-    issuer_uri = "https://app.terraform.io"
-  }
-
-  # Restrict to tokens issued for this org only — prevents any other HCP Terraform org from federating through this pool.
-  attribute_condition = "assertion.terraform_organization_id == \"${var.hcp_terraform_organization_id}\""
-
-  attribute_mapping = {
-    "google.subject"                      = "assertion.sub"
-    "attribute.terraform_run_phase"       = "assertion.terraform_run_phase"
-    "attribute.terraform_workspace_id"    = "assertion.terraform_workspace_id"
-    "attribute.terraform_organization_id" = "assertion.terraform_organization_id"
-  }
-}
-
-# ── HCP Terraform Agent Service Account 
-# Dedicated SA that HCP Terraform agent runs impersonate via WIF.  
-# Grant Permissions  to this SA; the WIF principal set is allowed to impersonate it.
-
-resource "google_service_account" "hcp_terraform_agent" {
-  account_id   = "${local.cluster_name}-agent-sa"
-  display_name = "HCP Terraform Agent SA for ${local.cluster_name}"
-}
-
-# ── Give storage admin to the account as can't create projects in my gcp account
-resource "google_project_iam_member" "hcp_terraform_agent_storage_admin" {
-  project = var.gcp_project_id
-  role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.hcp_terraform_agent.email}"
-}
-
-# Allow any agent run from this org to impersonate the agent SA.
-resource "google_service_account_iam_member" "hcp_terraform_wif_impersonation" {
-  service_account_id = google_service_account.hcp_terraform_agent.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.hcp_terraform.name}/attribute.terraform_organization_id/${var.hcp_terraform_organization_id}"
-}
-
 # ── GKE Cluster ──────────────────────────────────────────────────────────────
 
 resource "google_container_cluster" "primary" {
@@ -124,9 +74,9 @@ resource "google_container_cluster" "primary" {
   }
 
   private_cluster_config {
-    enable_private_nodes    = true
-    enable_private_endpoint = false
-    master_ipv4_cidr_block  = "172.16.0.0/28"
+    enable_private_nodes    = true            # Nodes get private IPs only; egress via Cloud NAT
+    enable_private_endpoint = false           # Kubernetes API remains publicly reachable via kubectl
+    master_ipv4_cidr_block  = "172.16.0.0/28" # Dedicated /28 for control plane VPC peering — GKE requires exactly /28, cannot be changed after cluster creation
   }
 
   workload_identity_config {

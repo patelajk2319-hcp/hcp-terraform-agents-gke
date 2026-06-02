@@ -1,6 +1,4 @@
 locals {
-  cluster_name = var.cluster_name
-
   agent_pools = {
     non-prod = {
       pool_name   = "gke-agent-pool-non-prod"

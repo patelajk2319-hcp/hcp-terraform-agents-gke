@@ -14,23 +14,6 @@ warn "Destroying all resources in project '${GCP_PROJECT_ID}'."
 
 get_gke_credentials "${GKE_CLUSTER_NAME}" "${GKE_REGION}" "${GCP_PROJECT_ID}" 2>/dev/null || true
 
-# Read outputs from state if initialised; fall back to .env values.
-GKE_STATE="${SCRIPT_DIR}/../terraform/gke-cluster"
-WI_AUDIENCE="$(terraform -chdir="${GKE_STATE}" output -raw workload_identity_audience 2>/dev/null || echo "${WORKLOAD_IDENTITY_AUDIENCE:-}")"
-WI_PROVIDER="$(terraform -chdir="${GKE_STATE}" output -raw workload_identity_provider_name 2>/dev/null || echo "")"
-AGENT_SA="$(terraform -chdir="${GKE_STATE}" output -raw hcp_terraform_agent_sa_email 2>/dev/null || echo "")"
-
-step "Destroying workspace bootstrap"
-cd "${SCRIPT_DIR}/../terraform/workspace-bootstrap"
-TFE_TOKEN="${HCP_TERRAFORM_TOKEN}" terraform destroy \
-  -var="hcp_terraform_organization=${HCP_TERRAFORM_ORGANIZATION}" \
-  -var="gcp_project_id=${GCP_PROJECT_ID}" \
-  -var="gcp_region=${GKE_REGION}" \
-  -var="workload_identity_audience=${WI_AUDIENCE}" \
-  -var="workload_identity_provider_name=${WI_PROVIDER}" \
-  -var="agent_sa_email=${AGENT_SA}" \
-  -auto-approve || warn "Workspace bootstrap destroy failed (may already be removed)."
-
 step "Destroying agent pools"
 # Strip finalizers first so the delete doesn't block waiting for the operator.
 for ap in $(kubectl get agentpool -n tfc-agents -o name 2>/dev/null || true); do
@@ -60,7 +43,6 @@ cd "${SCRIPT_DIR}/../terraform/gke-cluster"
 terraform destroy \
   -var="gcp_project_id=${GCP_PROJECT_ID}" \
   -var="gcp_region=${GKE_REGION}" \
-  -var="hcp_terraform_organization_id=${HCP_TERRAFORM_ORGANIZATION_ID}" \
   -auto-approve
 
 success "All resources destroyed."

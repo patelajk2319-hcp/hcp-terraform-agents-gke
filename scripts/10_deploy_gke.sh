@@ -17,7 +17,6 @@ terraform init -upgrade
 terraform apply \
   -var="gcp_project_id=${GCP_PROJECT_ID}" \
   -var="gcp_region=${GKE_REGION}" \
-  -var="hcp_terraform_organization_id=${HCP_TERRAFORM_ORGANIZATION_ID}" \
   -auto-approve
 
 get_gke_credentials "${GKE_CLUSTER_NAME}" "${GKE_REGION}" "${GCP_PROJECT_ID}"
@@ -27,7 +26,6 @@ until kubectl get nodes --no-headers 2>/dev/null | grep -q .; do sleep 5; done
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
 
 step "Writing cluster outputs to .env"
-WI_AUDIENCE="$(terraform output -raw workload_identity_audience)"
 CLUSTER_NAME="$(terraform output -raw cluster_name)"
 ENV_FILE="${SCRIPT_DIR}/../.env"
 
@@ -44,7 +42,6 @@ _upsert_env() {
   mv "${tmp}" "${file}"
 }
 
-_upsert_env "WORKLOAD_IDENTITY_AUDIENCE" "${WI_AUDIENCE}" "${ENV_FILE}"
 _upsert_env "GKE_CLUSTER_NAME" "${CLUSTER_NAME}" "${ENV_FILE}"
 
 success "GKE cluster is ready."
